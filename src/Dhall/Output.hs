@@ -26,6 +26,7 @@ Write Haskell types to dhall files. Consult the readme for more info
 module Dhall.Output
   ( OutputType
   , makeOutputType
+  , makeOutputTypeT
   , prettyOutputType
   ) where
 
@@ -65,8 +66,8 @@ makeUnionType p =
   case shape :: Shape (Code a) of
     ShapeCons ShapeNil ->
       case datatypeInfo p of
-        ADT _ _ cis   -> snd $ constructorHelper $ hd cis
-        Newtype _ _ _ -> error "Newtype not yet done"
+        ADT _ _ cis             -> snd $ constructorHelper $ hd cis
+        Newtype _ _ constructor -> snd $ constructorHelper constructor
     _ ->
       case datatypeInfo p of
         ADT _ _ cis ->
@@ -75,7 +76,7 @@ makeUnionType p =
           hcollapse
             (hcmap (Proxy @(All Interpret)) (K . constructorHelper) cis :: NP (K ( T.Text
                                                                                  , Expr Src X)) (Code a))
-        Newtype _ _ _ -> error "Newtype not yet done"
+        Newtype _ _ constructor -> snd $ constructorHelper constructor
 
 -- | The representation of a type to write out. We can combine multiple with the `Semigroup` and `Monoid` instances
 newtype OutputType = OutputType
@@ -83,13 +84,17 @@ newtype OutputType = OutputType
   } deriving (Eq,Show)
     deriving newtype (Semigroup,Monoid)
 
+-- | Like `makeOutputTypeT`, but we use the name of the datatype as the name
+makeOutputType :: (All2 Interpret (Code a), HasDatatypeInfo a) => Proxy a -> OutputType
+makeOutputType p = makeOutputTypeT (T.pack $ datatypeName $ datatypeInfo p) p
+
 -- | Create an output type. The first input is the name of the type to use in the output file. The second is a `Proxy` of the type we wish to store.
-makeOutputType ::
+makeOutputTypeT ::
      forall a. (All2 Interpret (Code a), HasDatatypeInfo a)
   => T.Text
   -> Proxy a
   -> OutputType
-makeOutputType n p =
+makeOutputTypeT n p =
   let ut = makeUnionType p
   in OutputType (H.singleton n ut)
 

@@ -4,4 +4,4 @@ in  let foobar = types.FooBar
 
 in  let cons = constructors foobar
 
-in  cons.Foo { foo = 2 } : foobar
+in  {_1 = cons.Foo { foo = 2 } : foobar, _2  = {bleep = "Hi"} : types.TestNewtype}
