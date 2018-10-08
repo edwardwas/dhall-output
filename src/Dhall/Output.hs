@@ -11,6 +11,18 @@
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 
+{-|
+Module      : Dhall.Output
+Description : Output dhall types to file
+Copyright   : (c) Ed Wastell, 2018
+License     : MIT
+Maintainer  : ed@wastell.co.uk
+Stability   : experimental
+Portability : POSIX
+
+Write Haskell types to dhall files. Consult the readme for more info
+-}
+
 module Dhall.Output
   ( OutputType
   , makeOutputType
@@ -65,12 +77,13 @@ makeUnionType p =
                                                                                  , Expr Src X)) (Code a))
         Newtype _ _ _ -> error "Newtype not yet done"
 
-
+-- | The representation of a type to write out. We can combine multiple with the `Semigroup` and `Monoid` instances
 newtype OutputType = OutputType
   { outputTypes :: H.InsOrdHashMap T.Text (Expr Src X)
   } deriving (Eq,Show)
     deriving newtype (Semigroup,Monoid)
 
+-- | Create an output type. The first input is the name of the type to use in the output file. The second is a `Proxy` of the type we wish to store.
 makeOutputType ::
      forall a. (All2 Interpret (Code a), HasDatatypeInfo a)
   => T.Text
@@ -80,5 +93,6 @@ makeOutputType n p =
   let ut = makeUnionType p
   in OutputType (H.singleton n ut)
 
+-- | Convert an `OutputType` to a `Text`. This will be nicely formated
 prettyOutputType :: OutputType -> Text
 prettyOutputType (OutputType t) = T.pack $ show $ Pretty.pretty $ RecordLit t
