@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE FlexibleContexts           #-}
@@ -30,6 +31,10 @@ module Dhall.Output
   , prettyOutputType
   ) where
 
+#if MIN_VERSION_base(4,11,0)
+#else
+import           Data.Semigroup
+#endif
 import qualified Data.HashMap.Strict.InsOrd as H
 import           Data.Proxy                 (Proxy (..))
 import qualified Data.Text                  as T
